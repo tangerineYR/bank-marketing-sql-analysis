@@ -1,79 +1,21 @@
 import streamlit as st
+from scoring import JOBS, MONTHS, CONTACTS, OUTCOMES, score_marketing_priority
 
-def recommend_marketing(age, job, month, contact, poutcome):
-    score = 0
-    
-    # 직업 (가장 높은 가입률 순)
-    if job in ['student', 'retired']:
-        score += 3
-    elif job in ['unemployed', 'management', 'admin.']:
-        score += 2
-    elif job in ['self-employed', 'unknown', 'technician']:
-        score += 1
-    
-    # 연령대 (실제 분석 기반)
-    if age <= 25 or age >= 50:  # 20대 이하, 50대 이상
-        score += 2
-    elif 30 <= age < 40:
-        score += 1
-    
-    # 연락 월 (높은 성공률 월)
-    if month in ['mar', 'sep', 'oct', 'dec']:
-        score += 2
-    
-    # 연락 방식
-    if contact == 'cellular':
-        score += 2
-    elif contact == 'telephone':
-        score += 1
-    # unknown은 0점
-    
-    # 이전 캠페인 결과 (가장 강력한 예측 인자)
-    if poutcome == 'success':
-        score += 4  # 64.7% 재가입률
-    elif poutcome == 'failure':
-        score -= 1
-    
-    # 결과 반환
-    if score >= 8:
-        return "적극 추천! (가입 가능성 매우 높음)"
-    elif score >= 5:
-        return "추천 (가입 가능성 높음)"
-    elif score >= 3:
-        return "보통 (신중히 고려)"
-    else:
-        return "비추천 (가입 가능성 낮음)"
-
-# Streamlit UI
-st.title("정기예금 마케팅 대상 추천")
-
+st.title('정기예금 마케팅 우선순위')
+st.caption('과거 SQL 분석을 참고해 사람이 정한 규칙 점수입니다. 통계적으로 학습된 확률 모델이 아닙니다.')
 col1, col2 = st.columns(2)
-
 with col1:
-    age = st.number_input("나이", min_value=18, max_value=100, value=35)
-    job = st.selectbox("직업", [
-        "student", "retired", "unemployed", "admin.", "management", 
-        "unknown", "self-employed", "technician", "services", 
-        "housemaid", "entrepreneur", "blue-collar"
-    ])
-
+    age = st.number_input('나이', min_value=18, max_value=100, value=35)
+    job = st.selectbox('직업', JOBS)
 with col2:
-    month = st.selectbox("연락 월", [
-        "jan", "feb", "mar", "apr", "may", "jun",
-        "jul", "aug", "sep", "oct", "nov", "dec"
-    ])
-    contact = st.selectbox("연락 방식", ["cellular", "telephone", "unknown"])
-
-poutcome = st.radio("이전 캠페인 결과", ["success", "failure", "unknown"])
-
-if st.button("가입 가능성 분석"):
-    result = recommend_marketing(age, job, month, contact, poutcome)
-    
-    if "적극 추천" in result:
-        st.success(result)
-    elif "추천" in result:
-        st.info(result)
-    elif "보통" in result:
-        st.warning(result)
-    else:
-        st.error(result)
+    month = st.selectbox('연락 월', MONTHS)
+    contact = st.selectbox('연락 방식', CONTACTS)
+previous_outcome = st.radio('이전 캠페인 결과', OUTCOMES)
+if st.button('우선순위 확인'):
+    result = score_marketing_priority(age, job, month, contact, previous_outcome)
+    st.subheader(result.grade)
+    st.metric('규칙 점수', result.score)
+    st.caption('점수 범위: -1~13 · 8점 이상 최우선 / 5~7점 우선 / 3~4점 일반 검토 / 3점 미만 낮은 우선순위')
+    for reason in result.reasons:
+        st.write(reason)
+    st.caption('과거 집단별 가입률은 마케팅의 인과 효과를 의미하지 않습니다.')
