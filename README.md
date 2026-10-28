@@ -14,8 +14,7 @@ Database & SQL 프로젝트**
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Decision_Support-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
 
-[![Rows](https://img.shields.io/badge/Source_Rows-45%2C211-444444?style=flat-square)]()
-[![Tests](https://img.shields.io/badge/Tests-21-4C8BF5?style=flat-square)]()
+![Rows](https://img.shields.io/badge/Source_Rows-45%2C211-444444?style=flat-square)
 [![CI](https://github.com/tangerineYR/bank-marketing-sql-analysis/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tangerineYR/bank-marketing-sql-analysis/actions/workflows/ci.yml)
 
 </div>
@@ -26,11 +25,11 @@ Database & SQL 프로젝트**
 
 이 프로젝트는 데이터베이스 전공 수업에서 수행한 개인 프로젝트로, **은행 텔레마케팅 데이터를 관계형 데이터베이스로 모델링하고 SQL 분석 결과를 마케팅 의사결정 지원 도구로 연결하는 것**을 목표로 했습니다.
 
-2025년 Historical Project에서는 UCI Bank Marketing CSV를 MySQL에 적재하고 직업·연령·연락 시기·연락 방식·이전 캠페인 결과에 따른 정기예금 가입률을 분석했습니다. 이후 분석 결과를 수동 가중치로 변환해 Streamlit 기반의 마케팅 대상 우선순위 UI를 구현했습니다.
+UCI Bank Marketing 데이터셋을 MySQL 관계형 스키마로 구성하고, 직업·연령대·연락 월·연락 방식·이전 캠페인 결과에 따른 정기예금 가입률을 SQL로 분석했습니다. 분석에서 관찰된 집단별 가입률을 참고해 5개 요인으로 구성된 규칙 기반 마케팅 우선순위 도구를 구현했습니다.
 
-2026년 Portfolio Refactoring에서는 원래 프로젝트의 범위를 확장하기보다 **데이터 적재 무결성, 스키마 의미, 재현성, 테스트 가능성**을 보강했습니다.
+현재 구현은 **CSV 검증, 트랜잭션 기반 데이터 적재, 반복 실행 시 데이터 중복 방지, 관계형 데이터 무결성 검증 및 자동화 테스트**를 지원합니다.
 
-```text id="brh9tk"
+```text
 UCI bank-full.csv
        ↓
 Raw Staging
@@ -65,7 +64,7 @@ Streamlit Decision Support
 
 # 🏗️ Architecture
 
-```mermaid id="67903o"
+```mermaid
 flowchart TD
     CSV["UCI bank-full.csv<br/>45,211 rows"]
         --> VALIDATE["Source Validation<br/>17 fields"]
@@ -97,7 +96,7 @@ flowchart TD
 
 전체 database는 **8개 table**로 구성됩니다.
 
-```text id="hdt42f"
+```text
 1 staging table
 +
 5 lookup tables
@@ -117,7 +116,7 @@ flowchart TD
 
 각 row에는:
 
-```text id="hfrfrq"
+```text
 source_row_id
 ```
 
@@ -129,7 +128,7 @@ source_row_id
 
 ## Lookup Tables
 
-```text id="8e0pel"
+```text
 job
 marital_status
 education
@@ -139,7 +138,7 @@ previous_outcome
 
 반복되는 categorical value를 별도 relation으로 분리하고 각각:
 
-```text id="6d9ti3"
+```text
 Primary Key
 Unique
 Not Null
@@ -153,7 +152,7 @@ Not Null
 
 원본 row의 고객 특성 영역을 담당합니다.
 
-```text id="30o58z"
+```text
 source_row_id
 age
 job_id
@@ -173,7 +172,7 @@ UCI dataset에는 persistent customer identifier가 제공되지 않기 때문�
 
 캠페인 및 연락 정보를 보존합니다.
 
-```text id="tz89dj"
+```text
 source_row_id
 contact_method_id
 day
@@ -186,7 +185,7 @@ previous_outcome_id
 subscribed
 ```
 
-Historical implementation에서 빠져 있던 `duration`과 `pdays`도 현재 relational representation에서는 보존합니다.
+`duration`과 `pdays`를 포함해 데이터셋의 17개 필드를 관계형 테이블에서 보존하고, JOIN을 통해 각 행의 필드를 복원할 수 있도록 구성했습니다.
 
 다만 `duration`은 통화 종료 후에만 알 수 있는 값이므로 **사전 마케팅 대상 priority score에는 사용하지 않습니다.**
 
@@ -194,23 +193,9 @@ Historical implementation에서 빠져 있던 `duration`과 `pdays`도 현재 re
 
 # 🔒 Transactional & Reproducible Loading
 
-Historical notebook에서는 cell을 재실행할 때 `Customer`와 `Campaign` row가 다시 INSERT될 수 있었습니다.
+초기 Notebook 중심의 적재 방식에서는 셀을 반복 실행하면 동일 데이터가 중복 삽입될 가능성이 있었습니다. 현재 로더는 전용 데이터베이스의 프로젝트 테이블 내용을 InnoDB 트랜잭션 안에서 교체하고, 커밋 전에 행 수·중복 식별자·외래키 무결성을 검증합니다. 적재 도중 오류가 발생하면 데이터 변경을 롤백합니다.
 
-실제 과거 notebook output에서는 일부 집계가:
-
-```text id="g2g85m"
-45,211 × 6
-=
-271,266
-```
-
-으로 증가한 상태가 확인됐습니다.
-
-비율은 동일하게 복제되어 겉으로는 정상처럼 보였지만, absolute row count와 database state는 잘못된 상태였습니다.
-
-2026 refactoring에서는 적재 과정을 별도의 transactional loader로 분리했습니다.
-
-```text id="kqa9yt"
+```text
 Validate CSV
      ↓
 Acquire DB Load Lock
@@ -249,7 +234,7 @@ Commit
 
 추가로 다음을 검증합니다.
 
-```text id="9wmydr"
+```text
 duplicate source_row_id = 0
 FK orphan             = 0
 ```
@@ -264,7 +249,7 @@ FK orphan             = 0
 
 현재 분석 항목은:
 
-```text id="wf1ot4"
+```text
 Overall Subscription Rate
 Job
 Age Band
@@ -277,7 +262,7 @@ Previous Campaign Outcome
 
 모든 grouping 결과의 row count 합계가 원본:
 
-```text id="efg7x1"
+```text
 45,211
 ```
 
@@ -285,13 +270,13 @@ Previous Campaign Outcome
 
 ---
 
-# 📈 Historical Findings
+# 📈 Descriptive Analysis Results
 
 아래 수치는 **과거 데이터에서 관찰된 기술통계**이며 미래 고객의 가입확률이나 마케팅의 인과 효과를 의미하지 않습니다.
 
 ## Overall
 
-```text id="cwtkw8"
+```text
 Overall Subscription Rate
 11.698%
 ```
@@ -347,7 +332,7 @@ Overall Subscription Rate
 
 이전 캠페인 결과가 `success`인 표본에서는:
 
-```text id="kmsjtf"
+```text
 64.725%
 ```
 
@@ -367,8 +352,8 @@ SQL 분석 결과를 참고하여 사람이 설계한:
 
 입니다.
 
-```text id="2vkrb6"
-Historical SQL Analysis
+```text
+SQL Descriptive Analysis
         ↓
 Manual Business Rules
         ↓
@@ -391,7 +376,7 @@ Priority Score
 
 총 점수 범위는:
 
-```text id="zt93vs"
+```text
 -1 ~ 13
 ```
 
@@ -412,7 +397,7 @@ Priority Score
 
 예:
 
-```text id="c7req1"
+```text
 +3 직업: student
 +2 연령대: 29세
 +2 연락 월: mar
@@ -428,9 +413,9 @@ Priority Score
 
 # 🧪 Tests & CI
 
-현재 repository에는 **21개의 automated tests**가 있습니다.
+총 21개의 자동화 테스트를 정의했습니다. 이 중 7개는 MySQL 연결이 필요한 통합 테스트로, RUN_DB_TESTS=1 환경변수가 설정된 경우 실행됩니다. GitHub Actions는 전용 MySQL 8.4 서비스를 구성하여 전체 테스트를 실행합니다.
 
-```text id="1mr6y1"
+```text
 Data contract tests       5
 Database integration      7
 Scoring tests             9
@@ -440,7 +425,7 @@ Total                    21
 
 주요 검증 범위:
 
-```text id="hs0o1t"
+```text
 45,211 source rows
 17 expected source fields
 5,289 subscribed rows
@@ -465,20 +450,19 @@ invalid input rejection
 
 GitHub Actions에서는 MySQL 8.4 service를 실행해 실제 DB integration test까지 수행합니다.
 
-```text id="i6gvdl"
-Python 3.12
-     ↓
-MySQL 8.4
-     ↓
+```text
+Python 3.12 + MySQL 8.4
+          ↓
 Install Dependencies
-     ↓
-Run 21 Tests
-     ↓
-Run SQL Analysis
-     ↓
-Validate Artifact
-     ↓
+          ↓
+Run 21 Automated Tests
+          ↓
+Execute SQL Analysis
+& Validate Summary
+          ↓
 git diff --check
+          ↓
+Upload Analysis Artifact
 ```
 
 현재 `main` workflow는 통과합니다.
@@ -502,7 +486,7 @@ git diff --check
 
 # 📁 Project Structure
 
-```text id="e25fja"
+```text
 bank-marketing-sql-analysis/
 │
 ├── bank-full.csv
@@ -545,72 +529,80 @@ bank-marketing-sql-analysis/
 
 ## 1. Environment
 
-Python 3.12와 MySQL 8.x 환경을 준비합니다.
+Python 3.12와 MySQL 8.x가 필요합니다.
 
-```bash id="nscb0y"
+```powershell
 git clone https://github.com/tangerineYR/bank-marketing-sql-analysis.git
 cd bank-marketing-sql-analysis
-
 python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 ```
 
-환경 활성화 후:
-
-```bash id="sp1h7e"
-pip install -r requirements.txt
-```
+macOS 또는 Linux에서는 가상환경 활성화 명령으로 `source .venv/bin/activate`를 사용합니다.
 
 ---
 
 ## 2. Database Configuration
 
-`.env.example`을 참고해 환경변수를 설정합니다.
+MySQL에서 프로젝트 전용 데이터베이스와 계정을 생성합니다. 다음 SQL은 관리자 계정으로 실행하세요.
 
-```text id="wwzqgk"
-DB_HOST
-DB_PORT
-DB_USER
-DB_PASSWORD
-DB_NAME
+```sql
+CREATE DATABASE IF NOT EXISTS bank_marketing
+CHARACTER SET utf8mb4;
+
+CREATE USER IF NOT EXISTS 'bank_app'@'127.0.0.1'
+IDENTIFIED BY 'replace-with-your-password';
+
+GRANT ALL PRIVILEGES ON bank_marketing.*
+TO 'bank_app'@'127.0.0.1';
 ```
 
-실제 credential은 repository에 저장하지 않습니다.
+이미 해당 계정이 있다면 실제 계정 암호에 맞춰 환경변수를 설정해야 합니다.
+
+**Windows PowerShell:**
+
+```powershell
+$env:DB_HOST = "127.0.0.1"
+$env:DB_PORT = "3306"
+$env:DB_USER = "bank_app"
+$env:DB_PASSWORD = "replace-with-your-password"
+$env:DB_NAME = "bank_marketing"
+```
+
+macOS/Linux에서는 동일한 변수를 `export DB_HOST=...` 형태로 설정합니다.
+
+`.env.example`은 설정값 참고용입니다. 현재 프로그램은 `.env` 파일을 자동으로 불러오지 않으므로 환경변수를 실행 환경에 직접 설정해야 합니다.
+
+**주의:** 데이터 로더는 지정한 데이터베이스의 프로젝트 테이블 8개를 초기화하거나 기존 데이터를 교체합니다. 다른 업무 데이터가 들어 있는 데이터베이스에서 실행하지 마세요. DB 통합 테스트도 별도의 테스트 데이터베이스를 사용해야 합니다.
+
+실제 비밀번호나 인증 정보는 Git에 커밋하지 않습니다.
 
 ---
 
 ## 3. Load Data
 
-```bash id="of9cq3"
+```bash
 python -m scripts.load_data
 ```
 
-정상 완료 시:
-
-```text id="w28kdp"
-staging_bank_full    45,211
-client_record        45,211
-campaign_contact     45,211
-FK orphan            0
-duplicate source ID  0
-```
-
-을 검증합니다.
+정상 완료 시 JSON 형태로 검증 결과가 출력됩니다. counts의 staging_bank_full, client_record, campaign_contact가 각각 45,211행인지, fk_orphans의 모든 값이 0인지, duplicate_source_row_ids가 0인지 확인합니다.
 
 ---
 
 ## 4. Run SQL Analysis
 
-```bash id="qo1jrb"
+```bash
 python -m scripts.run_analysis
 ```
 
-분석 결과는 CI에서 machine-readable artifact로 생성됩니다.
+분석 결과는 기본적으로 results/analysis_summary.json에 저장됩니다. results/는 Git 추적에서 제외되며, GitHub Actions 실행 시 분석 결과 JSON을 워크플로 artifact로 업로드합니다.
 
 ---
 
 ## 5. Run Streamlit
 
-```bash id="8jj3ud"
+```bash
 streamlit run 마케팅추천프로그램.py
 ```
 
@@ -618,23 +610,26 @@ Streamlit application은 DB에서 실시간 probability prediction을 수행하�
 
 ---
 
-# 🔄 Historical Project vs Portfolio Refactoring
+# 🔧 Engineering Decisions & Validation
 
-| 구분 | 2025 Historical Project | 2026 Portfolio Refactoring |
-| --- | --- | --- |
-| Data | UCI `bank-full.csv` | 원본 그대로 보존 |
-| Schema | Lookup + Customer + Campaign | 의미 명확한 1 staging + 7 domain tables |
-| Customer ID | Insert order 기반 추정 | deterministic `source_row_id` |
-| Loading | 반복 실행 시 중복 가능 | transactional & idempotent |
-| Fields | `duration`, `pdays` 일부 누락 | 원본 17 field round-trip 검증 |
-| SQL | Notebook 내부 분석 | executable `analysis.sql` |
-| Scoring | UI 내부 함수 | pure `scoring.py` |
-| Age Rule | `<=25` | SQL 분석과 맞춘 `<30` |
-| Output | 가입 가능성 표현 | marketing priority 표현 |
-| Validation | 수동 | 21 automated tests |
-| CI | 없음 | MySQL 8.4 integration CI |
+데이터 적재부터 분석 결과 활용까지, 각 단계의 데이터 무결성과 실행 재현성을 확인할 수 있도록 구성했습니다.
 
-2026 refactoring은 새로운 ML model을 추가한 것이 아니라, **기존 데이터베이스 프로젝트의 의미와 무결성을 실제 코드 수준에서 검증 가능하도록 만든 작업**입니다.
+| Concern | Engineering Decision | Verification |
+|---|---|---|
+| Source Data Integrity | CSV의 17개 필드·45,211행 및 값 범위 검증 | Data contract tests |
+| Relational Modeling | 1개 staging, 5개 lookup, 2개 domain table | Schema integration tests |
+| Row Identification | CSV 행에 `source_row_id` 부여 | PK·중복 ID 검증 |
+| Repeated Loading | 트랜잭션 내 프로젝트 데이터 교체 | Double-load idempotency test |
+| Failure Recovery | 적재 실패 시 데이터 변경 롤백 | Rollback test |
+| Referential Integrity | PK·FK·UNIQUE·CHECK 제약 적용 | Database constraint tests |
+| Source Preservation | 17개 필드를 관계형 테이블 JOIN으로 복원 | Full-column round-trip test |
+| SQL Analytics | 분석 SQL을 별도 실행 파일로 관리 | Aggregate count·rate validation |
+| Priority Scoring | SQL 기술통계 기반의 명시적 규칙 적용 | Weight·boundary tests |
+| Reproducibility | CLI 실행 및 MySQL 통합 CI | GitHub Actions |
+
+데이터 적재 트랜잭션과 테이블 생성 DDL은 구분됩니다. MySQL의 DDL은 암묵적 커밋을 수행하므로, 데이터 적재 실패 시 롤백 보장은 트랜잭션 안에서 수행한 데이터 변경에 적용됩니다.
+
+마케팅 우선순위 점수는 학습된 예측 모델이 아니라, SQL 분석에서 관찰된 집단별 가입률을 참고해 설계한 휴리스틱입니다.
 
 ---
 
@@ -650,15 +645,15 @@ Priority score는 SQL 기술통계를 참고해 사람이 설계한 heuristic ru
 
 **No Causal Claim**
 
-특정 직업·연령·월·이전 캠페인 결과와 높은 가입률의 관계는 historical association입니다. 해당 변수를 바꾸면 가입률이 상승한다는 인과관계를 의미하지 않습니다.
+특정 직업·연령·월·이전 캠페인 결과와 높은 가입률의 관계는 관측된 통계적 연관성입니다. 해당 변수를 바꾸면 가입률이 상승한다는 인과관계를 의미하지 않습니다.
 
 **Duration Excluded from Targeting**
 
 `duration`은 relational schema에는 보존하지만 통화가 종료된 후에만 알 수 있으므로 사전 targeting score에는 사용하지 않습니다.
 
-**Historical Dataset**
+**Dataset Scope**
 
-이 프로젝트는 UCI가 공개한 historical Bank Marketing dataset을 사용하며 실제 현재 은행 고객이나 운영 시스템과 연결되지 않습니다.
+이 프로젝트는 UCI Bank Marketing 공개 데이터셋을 사용한 교육 목적의 분석으로, 실제 은행 운영 시스템이나 실시간 고객 데이터와 연결되지 않습니다.
 
 ---
 
@@ -673,6 +668,10 @@ This project uses the **Bank Marketing** dataset from the UCI Machine Learning R
 
 Dataset license: **CC BY 4.0**
 
+Dataset: [Bank Marketing — UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/222/bank+marketing)
+
+License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+
 ---
 
 # 🔗 Related Project
@@ -684,7 +683,7 @@ Dataset license: **CC BY 4.0**
 - **This Project — Database & SQL:** 관계형 스키마 설계, 트랜잭션 기반 데이터 적재, SQL 기술통계 분석, 규칙 기반 마케팅 우선순위 분류
 - **Related Project — Deep Learning:** PyTorch MLP 이진 분류, 클래스 불균형 대응, 데이터 누수 방지, 하이퍼파라미터 탐색 및 모델 성능 평가
 
-두 프로젝트는 동일한 데이터 도메인을 활용하지만 **데이터베이스 설계·분석 역량과 딥러닝 모델링·평가 역량**을 각각 보여주는 독립된 프로젝트입니다.
+두 저장소는 같은 데이터셋을 사용하지만, 이 프로젝트는 **관계형 데이터 모델링·SQL 분석**을, 연결된 프로젝트는 **PyTorch 기반 이진 분류와 모델 평가**를 다룹니다.
 
 ---
 
