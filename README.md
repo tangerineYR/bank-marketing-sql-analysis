@@ -675,9 +675,9 @@ Dataset license: **CC BY 4.0**
 
 ---
 
-## 🔗 Related Project
+# 🔗 Related Project
 
-### [Bank Marketing MLP — PyTorch Classification](https://github.com/tangerineYR/bank-marketing-mlp)
+## [Bank Marketing MLP — PyTorch Classification](https://github.com/tangerineYR/bank-marketing-mlp)
 
 동일한 UCI Bank Marketing 데이터를 **딥러닝 관점**에서 다룬 별도의 개인 프로젝트입니다.
 
