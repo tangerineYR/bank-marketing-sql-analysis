@@ -16,7 +16,7 @@ Database & SQL 프로젝트**
 
 [![Rows](https://img.shields.io/badge/Source_Rows-45%2C211-444444?style=flat-square)]()
 [![Tests](https://img.shields.io/badge/Tests-21-4C8BF5?style=flat-square)]()
-[![CI](https://img.shields.io/badge/MySQL_CI-Passing-2088FF?style=flat-square&logo=githubactions&logoColor=white)]()
+[![CI](https://github.com/tangerineYR/bank-marketing-sql-analysis/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tangerineYR/bank-marketing-sql-analysis/actions/workflows/ci.yml)
 
 </div>
 
@@ -672,6 +672,19 @@ This project uses the **Bank Marketing** dataset from the UCI Machine Learning R
 > DOI: `10.24432/C5K306`
 
 Dataset license: **CC BY 4.0**
+
+---
+
+## 🔗 Related Project
+
+### [Bank Marketing MLP — PyTorch Classification](https://github.com/tangerineYR/bank-marketing-mlp)
+
+동일한 UCI Bank Marketing 데이터를 **딥러닝 관점**에서 다룬 별도의 개인 프로젝트입니다.
+
+- **This Project — Database & SQL:** 관계형 스키마 설계, 트랜잭션 기반 데이터 적재, SQL 기술통계 분석, 규칙 기반 마케팅 우선순위 분류
+- **Related Project — Deep Learning:** PyTorch MLP 이진 분류, 클래스 불균형 대응, 데이터 누수 방지, 하이퍼파라미터 탐색 및 모델 성능 평가
+
+두 프로젝트는 동일한 데이터 도메인을 활용하지만 **데이터베이스 설계·분석 역량과 딥러닝 모델링·평가 역량**을 각각 보여주는 독립된 프로젝트입니다.
 
 ---
 
