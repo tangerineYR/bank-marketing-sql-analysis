@@ -62,7 +62,7 @@ Streamlit Decision Support
 
 ---
 
-# 🏗️ Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart TD
@@ -92,7 +92,7 @@ flowchart TD
 
 ---
 
-# 🗃️ Relational Schema
+## 🗃️ Relational Schema
 
 전체 database는 **8개 table**로 구성됩니다.
 
@@ -108,9 +108,9 @@ flowchart TD
 8 tables
 ```
 
-## Raw Staging
+### Raw Staging
 
-### `staging_bank_full`
+#### `staging_bank_full`
 
 원본 CSV의 모든 17개 field를 보존합니다.
 
@@ -126,7 +126,7 @@ source_row_id
 
 ---
 
-## Lookup Tables
+### Lookup Tables
 
 ```text
 job
@@ -148,7 +148,7 @@ Not Null
 
 ---
 
-## `client_record`
+### `client_record`
 
 원본 row의 고객 특성 영역을 담당합니다.
 
@@ -168,7 +168,7 @@ UCI dataset에는 persistent customer identifier가 제공되지 않기 때문�
 
 ---
 
-## `campaign_contact`
+### `campaign_contact`
 
 캠페인 및 연락 정보를 보존합니다.
 
@@ -191,7 +191,7 @@ subscribed
 
 ---
 
-# 🔒 Transactional & Reproducible Loading
+## 🔒 Transactional & Reproducible Loading
 
 초기 Notebook 중심의 적재 방식에서는 셀을 반복 실행하면 동일 데이터가 중복 삽입될 가능성이 있었습니다. 현재 로더는 전용 데이터베이스의 프로젝트 테이블 내용을 InnoDB 트랜잭션 안에서 교체하고, 커밋 전에 행 수·중복 식별자·외래키 무결성을 검증합니다. 적재 도중 오류가 발생하면 데이터 변경을 롤백합니다.
 
@@ -221,7 +221,7 @@ Commit
 
 ---
 
-## Idempotency
+### Idempotency
 
 같은 dataset을 두 번 적재해도 row 수가 증가하지 않습니다.
 
@@ -243,7 +243,7 @@ FK orphan             = 0
 
 ---
 
-# 📊 SQL Analysis
+## 📊 SQL Analysis
 
 분석 query는 notebook에서 분리해 [`sql/analysis.sql`](sql/analysis.sql)에 유지합니다.
 
@@ -270,11 +270,11 @@ Previous Campaign Outcome
 
 ---
 
-# 📈 Descriptive Analysis Results
+## 📈 Descriptive Analysis Results
 
 아래 수치는 **과거 데이터에서 관찰된 기술통계**이며 미래 고객의 가입확률이나 마케팅의 인과 효과를 의미하지 않습니다.
 
-## Overall
+### Overall
 
 ```text
 Overall Subscription Rate
@@ -283,7 +283,7 @@ Overall Subscription Rate
 
 ---
 
-## Job
+### Job
 
 | Job | Subscription Rate |
 | --- | ---: |
@@ -294,7 +294,7 @@ Overall Subscription Rate
 
 ---
 
-## Age Band
+### Age Band
 
 | Age | Subscription Rate |
 | --- | ---: |
@@ -307,7 +307,7 @@ Overall Subscription Rate
 
 ---
 
-## Contact Month
+### Contact Month
 
 | Month | Subscription Rate |
 | --- | ---: |
@@ -318,7 +318,7 @@ Overall Subscription Rate
 
 ---
 
-## Contact Method
+### Contact Method
 
 | Method | Subscription Rate |
 | --- | ---: |
@@ -328,7 +328,7 @@ Overall Subscription Rate
 
 ---
 
-## Previous Campaign Outcome
+### Previous Campaign Outcome
 
 이전 캠페인 결과가 `success`인 표본에서는:
 
@@ -342,7 +342,7 @@ Overall Subscription Rate
 
 ---
 
-# 🎯 Rule-based Marketing Priority
+## 🎯 Rule-based Marketing Priority
 
 이 프로젝트의 Streamlit application은 ML classifier가 아닙니다.
 
@@ -364,7 +364,7 @@ Priority Score
 
 ---
 
-## Five Scoring Factors
+### Five Scoring Factors
 
 | Factor | Rule |
 | --- | --- |
@@ -384,7 +384,7 @@ Priority Score
 
 ---
 
-## Priority Grades
+### Priority Grades
 
 | Score | Priority |
 | --- | --- |
@@ -411,7 +411,7 @@ Priority Score
 
 ---
 
-# 🧪 Tests & CI
+## 🧪 Tests & CI
 
 총 21개의 자동화 테스트를 정의했습니다. 이 중 7개는 MySQL 연결이 필요한 통합 테스트로, RUN_DB_TESTS=1 환경변수가 설정된 경우 실행됩니다. GitHub Actions는 전용 MySQL 8.4 서비스를 구성하여 전체 테스트를 실행합니다.
 
@@ -469,7 +469,7 @@ Upload Analysis Artifact
 
 ---
 
-# 🛠️ Tech Stack
+## 🛠️ Tech Stack
 
 | Category | Technology |
 | --- | --- |
@@ -484,7 +484,7 @@ Upload Analysis Artifact
 
 ---
 
-# 📁 Project Structure
+## 📁 Project Structure
 
 ```text
 bank-marketing-sql-analysis/
@@ -525,9 +525,9 @@ bank-marketing-sql-analysis/
 
 ---
 
-# ▶️ Reproduction
+## ▶️ Reproduction
 
-## 1. Environment
+### 1. Environment
 
 Python 3.12와 MySQL 8.x가 필요합니다.
 
@@ -543,7 +543,7 @@ macOS 또는 Linux에서는 가상환경 활성화 명령으로 `source .venv/bi
 
 ---
 
-## 2. Database Configuration
+### 2. Database Configuration
 
 MySQL에서 프로젝트 전용 데이터베이스와 계정을 생성합니다. 다음 SQL은 관리자 계정으로 실행하세요.
 
@@ -580,7 +580,7 @@ macOS/Linux에서는 동일한 변수를 `export DB_HOST=...` 형태로 설정�
 
 ---
 
-## 3. Load Data
+### 3. Load Data
 
 ```bash
 python -m scripts.load_data
@@ -590,7 +590,7 @@ python -m scripts.load_data
 
 ---
 
-## 4. Run SQL Analysis
+### 4. Run SQL Analysis
 
 ```bash
 python -m scripts.run_analysis
@@ -600,7 +600,7 @@ python -m scripts.run_analysis
 
 ---
 
-## 5. Run Streamlit
+### 5. Run Streamlit
 
 ```bash
 streamlit run 마케팅추천프로그램.py
@@ -610,7 +610,7 @@ Streamlit application은 DB에서 실시간 probability prediction을 수행하�
 
 ---
 
-# 🔧 Engineering Decisions & Validation
+## 🔧 Engineering Decisions & Validation
 
 데이터 적재부터 분석 결과 활용까지, 각 단계의 데이터 무결성과 실행 재현성을 확인할 수 있도록 구성했습니다.
 
@@ -633,7 +633,7 @@ Streamlit application은 DB에서 실시간 probability prediction을 수행하�
 
 ---
 
-# ⚠️ Scope & Limitations
+## ⚠️ Scope & Limitations
 
 **No Persistent Customer ID**
 
@@ -657,7 +657,7 @@ Priority score는 SQL 기술통계를 참고해 사람이 설계한 heuristic ru
 
 ---
 
-# 📚 Dataset Attribution
+## 📚 Dataset Attribution
 
 This project uses the **Bank Marketing** dataset from the UCI Machine Learning Repository.
 
@@ -674,9 +674,9 @@ License: [Creative Commons Attribution 4.0 International](https://creativecommon
 
 ---
 
-# 🔗 Related Project
+## 🔗 Related Project
 
-## [Bank Marketing MLP — PyTorch Classification](https://github.com/tangerineYR/bank-marketing-mlp)
+### [Bank Marketing MLP — PyTorch Classification](https://github.com/tangerineYR/bank-marketing-mlp)
 
 동일한 UCI Bank Marketing 데이터를 **딥러닝 관점**에서 다룬 별도의 개인 프로젝트입니다.
 
