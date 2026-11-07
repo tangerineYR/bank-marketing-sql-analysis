@@ -614,18 +614,18 @@ Streamlit application은 DB에서 실시간 probability prediction을 수행하�
 
 데이터 적재부터 분석 결과 활용까지, 각 단계의 데이터 무결성과 실행 재현성을 확인할 수 있도록 구성했습니다.
 
-| Concern | Engineering Decision | Verification |
+| 검토 항목 | 설계 결정 | 검증 방법 |
 |---|---|---|
-| Source Data Integrity | CSV의 17개 필드·45,211행 및 값 범위 검증 | Data contract tests |
-| Relational Modeling | 1개 staging, 5개 lookup, 2개 domain table | Schema integration tests |
-| Row Identification | CSV 행에 `source_row_id` 부여 | PK·중복 ID 검증 |
-| Repeated Loading | 트랜잭션 내 프로젝트 데이터 교체 | Double-load idempotency test |
-| Failure Recovery | 적재 실패 시 데이터 변경 롤백 | Rollback test |
-| Referential Integrity | PK·FK·UNIQUE·CHECK 제약 적용 | Database constraint tests |
-| Source Preservation | 17개 필드를 관계형 테이블 JOIN으로 복원 | Full-column round-trip test |
-| SQL Analytics | 분석 SQL을 별도 실행 파일로 관리 | Aggregate count·rate validation |
-| Priority Scoring | SQL 기술통계 기반의 명시적 규칙 적용 | Weight·boundary tests |
-| Reproducibility | CLI 실행 및 MySQL 통합 CI | GitHub Actions |
+| 원본 데이터 무결성 | 원본 CSV의 17개 필드·45,211개 행과 값 범위를 검증 | 원본 데이터 계약 테스트 |
+| 관계형 데이터 모델링 | 1개 Staging 테이블, 5개 Lookup 테이블, 2개 도메인 테이블로 구성 | 스키마 통합 테스트 |
+| 원본 행 식별 | `source_row_id`를 부여하여 원본 CSV의 각 행을 구분 | 기본 키 및 중복 식별자 검증 |
+| 반복 적재 방지 | 트랜잭션 안에서 프로젝트 데이터를 교체하여 반복 실행 시 중복 적재 방지 | 2회 반복 적재 멱등성 테스트 |
+| 실패 시 데이터 복구 | 데이터 적재 중 오류 발생 시 트랜잭션 내 변경사항을 롤백 | 트랜잭션 롤백 테스트 |
+| 참조 무결성 | PK·FK·UNIQUE·CHECK 제약조건을 적용하여 데이터 관계와 값의 유효성 검증 | 데이터베이스 제약조건 테스트 |
+| 원본 데이터 보존 | 관계형 테이블을 JOIN하여 원본 CSV의 17개 필드를 복원 | 전체 필드 복원 검증 테스트 |
+| SQL 분석 | 분석 SQL을 별도 실행 파일로 관리하고 집계 결과를 검증 | 집계 건수 및 비율 검증 |
+| 마케팅 우선순위 산정 | SQL 기술통계에서 관찰된 가입률을 참고하여 5개 요인의 명시적 규칙 적용 | 가중치 및 경계값 테스트 |
+| 실행 재현성 | CLI 기반 분석 실행과 MySQL 통합 테스트 자동화 | GitHub Actions |
 
 데이터 적재 트랜잭션과 테이블 생성 DDL은 구분됩니다. MySQL의 DDL은 암묵적 커밋을 수행하므로, 데이터 적재 실패 시 롤백 보장은 트랜잭션 안에서 수행한 데이터 변경에 적용됩니다.
 
@@ -659,18 +659,18 @@ Priority score는 SQL 기술통계를 참고해 사람이 설계한 heuristic ru
 
 ## 📚 Dataset Attribution
 
-This project uses the **Bank Marketing** dataset from the UCI Machine Learning Repository.
+이 프로젝트는 UCI Machine Learning Repository에서 제공하는 **Bank Marketing** 데이터셋을 사용합니다.
 
 > Moro, S., Rita, P., & Cortez, P. (2014).  
 > *Bank Marketing* [Dataset].  
 > UCI Machine Learning Repository.  
 > DOI: `10.24432/C5K306`
 
-Dataset license: **CC BY 4.0**
+데이터셋 라이선스: **CC BY 4.0**
 
-Dataset: [Bank Marketing — UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/222/bank+marketing)
+데이터셋: [Bank Marketing — UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/222/bank+marketing)
 
-License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+라이선스: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 
 ---
 
@@ -680,8 +680,8 @@ License: [Creative Commons Attribution 4.0 International](https://creativecommon
 
 동일한 UCI Bank Marketing 데이터를 **딥러닝 관점**에서 다룬 별도의 개인 프로젝트입니다.
 
-- **This Project — Database & SQL:** 관계형 스키마 설계, 트랜잭션 기반 데이터 적재, SQL 기술통계 분석, 규칙 기반 마케팅 우선순위 분류
-- **Related Project — Deep Learning:** PyTorch MLP 이진 분류, 클래스 불균형 대응, 데이터 누수 방지, 하이퍼파라미터 탐색 및 모델 성능 평가
+- **이 프로젝트 — Database & SQL:** 관계형 스키마 설계, 트랜잭션 기반 데이터 적재, SQL 기술통계 분석, 규칙 기반 마케팅 우선순위 분류
+- **연계 프로젝트 — Deep Learning:** PyTorch MLP 이진 분류, 클래스 불균형 대응, 데이터 누수 방지, 하이퍼파라미터 탐색 및 모델 성능 평가
 
 두 저장소는 같은 데이터셋을 사용하지만, 이 프로젝트는 **관계형 데이터 모델링·SQL 분석**을, 연결된 프로젝트는 **PyTorch 기반 이진 분류와 모델 평가**를 다룹니다.
 
@@ -689,8 +689,9 @@ License: [Creative Commons Attribution 4.0 International](https://creativecommon
 
 <div align="center">
 
-**Raw Data → Relational Integrity → SQL Evidence → Transparent Decision Rules**
+**원본 데이터 → 관계형 무결성 → SQL 분석 → 명시적인 의사결정 규칙**
 
-_A decision-support tool should make both its data model and its assumptions inspectable._
+_신뢰할 수 있는 의사결정 지원은 검증 가능한 데이터 구조와 명확하게 공개된 판단 기준에서 시작됩니다._
 
 </div>
+
